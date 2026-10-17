@@ -48,8 +48,6 @@ th,td{padding:6px 10px;border-bottom:1px solid #e3def7;text-align:right;white-sp
 :focus-visible{outline:3px solid #FF4D8D;outline-offset:2px}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 .inst{display:block;margin:16px 0 0;background:#FF4D8D;font-size:20px}
-.vid{position:relative;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:#000;box-shadow:0 5px 0 rgba(42,31,92,.2)}
-.vid iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 
 /* منع السحب للتحديث العرضي أثناء الاختبار */
 html,body{overscroll-behavior-y:contain}
@@ -65,12 +63,7 @@ textarea{width:100%;padding:12px 16px;border:3px solid var(--c);border-radius:20
 .rlist{text-align:right;margin:14px 0}.rrow{background:#fff;border-radius:16px;padding:6px 12px;margin:6px 0;font-weight:700}
 
 /* كرونو حصة المادة */
-.chcard{background:#fff;border-radius:26px;padding:12px 16px;margin:0 0 6px;text-align:center;box-shadow:0 6px 0 rgba(42,31,92,.15);border-top:8px solid var(--c)}
-.chl b{font:400 22px 'Lalezar';color:var(--c)}.chl small{display:block;opacity:.7;font-size:14px;line-height:1.5}
-.chtime{font:400 64px/1.2 'Lalezar';direction:ltr;letter-spacing:2px}.chtime.low{color:#FF4D4D}
 .btn.dn{background:#22B35E}
-#chr{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);z-index:20;background:var(--c);color:#fff;padding:6px 18px;border-radius:30px;font:400 22px 'Lalezar';box-shadow:0 5px 0 rgba(0,0,0,.25);cursor:pointer;direction:rtl;white-space:nowrap}
-#chr.low{background:#FF4D4D}
 .toast{position:fixed;top:90px;left:12px;right:12px;z-index:30;background:#22B35E;color:#fff;border-radius:22px;padding:14px 18px;text-align:center;font:400 22px/1.5 'Lalezar';box-shadow:0 6px 0 rgba(0,0,0,.25)}
 
 /* مادة اليوم */
@@ -95,23 +88,12 @@ textarea{width:100%;padding:12px 16px;border:3px solid var(--c);border-radius:20
 .blank{display:inline-block;min-width:96px;border-bottom:3px dashed var(--c);text-align:center;color:#15803d;font-weight:700}
 .fb{font:600 17px/1.7 'Tajawal';margin-top:8px;text-align:right}.fb.ok{color:#15803d}.fb.no{color:#b91c1c}
 
-.vid.vloc{aspect-ratio:auto;max-width:340px;margin:0 auto}.vid.vloc video{display:block;width:100%;max-height:70vh;background:#000}
 
-.rlist2{margin:10px 0}.rt{display:flex;gap:8px;align-items:center;background:#fff;border-radius:16px;padding:10px 14px;margin:6px 0;font-weight:700;cursor:pointer;border-right:6px solid #FF4D8D;box-shadow:0 2px 0 rgba(0,0,0,.06)}
-.rt.lv0{font-size:19px}.rt.lv1{margin-right:16px;font-size:17px;border-right-color:#ff8fb7}.rt.lv2{margin-right:32px;font-size:16px;border-right-color:#ffc2d8}.rt.lv3{margin-right:48px;font-size:15px;border-right-color:#ffe0eb}
-.rlist2[dir=ltr] .rt{border-right:0;border-left:6px solid #FF4D8D}.rlist2[dir=ltr] .rt.lv1{margin-right:0;margin-left:16px}.rlist2[dir=ltr] .rt.lv2{margin-right:0;margin-left:32px}.rlist2[dir=ltr] .rt.lv3{margin-right:0;margin-left:48px}
-.rt:active{transform:scale(.98)}
-
-.mst{margin:6px 2px;font-size:15px;font-weight:700;color:#7a2f55;background:#fff0f6;border-radius:12px;padding:6px 10px}.mst:empty{display:none}
-
-/* نسبة التسميع في أعلى الصفحة */
-.rpct{display:flex;flex-direction:column;align-items:center;gap:2px;margin:4px 0 12px;padding:12px 10px;border-radius:20px;background:#fff;box-shadow:0 5px 0 rgba(42,31,92,.15);text-align:center}
-.rpct b{font-size:44px;line-height:1.1;color:var(--c,#15803d)}
-.rpct span{font-weight:700}
-.rpct small{opacity:.75}
-.rpct.s{flex-direction:row;justify-content:center;gap:10px;padding:8px 10px;flex-wrap:wrap}
-.rpct.s b{font-size:26px}
-
-.rt .ck{font-style:normal;font-size:22px;line-height:1}
-.rt.on{background:#ecfdf3;outline:3px solid var(--c,#15803d)}
-#solb{margin:6px 0 10px}
+/* قائمة عناوين التسميع */
+.rmenu{display:flex;flex-direction:column;gap:8px;margin:12px 0 6px}
+.rit{display:flex;align-items:center;gap:10px;background:#fff;border-radius:18px;padding:12px 14px;font:700 18px/1.5 'Tajawal';box-shadow:0 4px 0 rgba(42,31,92,.13);border-right:6px solid var(--c);cursor:pointer;user-select:none}
+.rit:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(42,31,92,.13)}
+.rit .rt{flex:1}.rit .rg{opacity:.4;font-size:22px}
+.rit.sub{margin-right:22px;font-weight:500;font-size:16.5px;border-right-width:4px;opacity:.95}
+.rit[dir=ltr]{text-align:left;border-right:0;border-left:6px solid var(--c)}
+.mlbl{margin:12px 4px 0;font:400 18px 'Lalezar';color:#15803d;text-align:right}

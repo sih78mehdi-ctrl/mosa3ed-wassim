@@ -12,9 +12,10 @@ let testActive=null;
 const show=()=>{testActive=null;const[f,t,c]=hist[hist.length-1];f();ttl.textContent=t;color(c);back.hidden=hist.length<2;scrollTo(0,0)};
 const go=(fn,t,c)=>{hist.push([fn,t,c]);show()};
 back.onclick=()=>{
-  if(testActive){if(!confirm('ستُلغى كل إجاباتك ويبدأ الاختبار من الصفر. هل تريد الخروج؟'))return;testActive=null;rstopMic()}
+  if(testActive&&testActive.type==='quiz'&&!confirm('ستُلغى كل إجاباتك ويبدأ الاختبار من الصفر. هل تريد الخروج؟'))return;
+  if(testActive){testActive=null;rstopMic()}   /* التسميع محفوظ تلقائيًا فلا يحتاج تأكيدًا */
   hist.pop();show()};
-who.onclick=()=>{if(testActive&&!confirm('ستُلغى كل إجاباتك. هل تريد تبديل الطفل؟'))return;testActive=null;try{rstopMic()}catch(e){}pickKid()};
+who.onclick=()=>{if(testActive&&testActive.type==='quiz'&&!confirm('ستُلغى كل إجاباتك. هل تريد تبديل الطفل؟'))return;testActive=null;try{rstopMic()}catch(e){}pickKid()};
 const PAL={hist:'#FF9F1C',geo:'#0FB5A6',civ:'#6C4DF6',isl:'#22B35E'},ICON={hist:'📜',geo:'🌍',civ:'🏛️',isl:'🕌'};
 const PRAISE=['أحسنت!','ممتاز!','رائع!','يا بطل!','مذهل!'],OOPS=['لا بأس، تعلّم منها!','قريبًا تصيبها!','حاول في الجولة القادمة!'];
 const pick=a=>a[Math.floor(Math.random()*a.length)];
@@ -39,7 +40,7 @@ document.addEventListener('click',e=>{if(e.target.closest('.btn,.tile,.node,#bac
 
 /* اختيار الطفل */
 function pickKid(){
-  kid=null;hist=[];back.hidden=true;who.textContent='';color('#6C4DF6');ttl.textContent='دروسي';
+  kid=null;hist=[];back.hidden=true;who.textContent='';color('#6C4DF6');ttl.textContent='مساعد إياد';
   app.innerHTML=`<div class="res"><h2>من سيدرس اليوم؟</h2></div><div class="tiles">`+KIDS.map(k=>`<div class="tile" style="--c:${k.color}" data-id="${k.id}"><span class="em">${k.emoji}</span><b>${esc(k.name)}</b></div>`).join('')+'</div>';
   app.querySelectorAll('.tile').forEach(e=>e.onclick=()=>enter(e.dataset.id));
 }
@@ -47,7 +48,7 @@ function enter(id){
   kid=KIDS.find(k=>k.id===id);if(!kid)return pickKid();
   localStorage.setItem('kid',JSON.stringify(id));
   window.SUBJECTS=SUBJECT_LIST.map(([sid,name])=>({id:sid,name,color:PAL[sid],sections:kid.subjects[sid]||[]}));
-  who.textContent=kid.emoji;hist=[];go(home,'دروسي');
+  who.textContent=kid.emoji;hist=[];go(home,'مساعد إياد');
 }
 function home(){
   const t=st(),p=prog(),total=Object.values(p).reduce((x,r)=>x+stars(r.pct),0);
@@ -68,7 +69,7 @@ function lesson(s,l){
   const r=prog()[l.id];
   app.innerHTML=`<h2 dir="auto">${esc(l.title)}</h2>${l.qs.length?`<div class="acts"><div class="btn" id="go">ابدأ الاختبار (${l.qs.length} سؤالًا)</div></div>${r?`<p class="hint">آخر نتيجة: ${r.last??r.pct}% · أفضل نتيجة: ${r.pct}%</p>`:''}`:'<p class="hint">لم تُضف أسئلة هذا الدرس بعد.</p>'}
   ${recBtn(l)}
-  ${l.pdf?`<div id="pdf" class="pdf"><p class="hint">جارٍ تحميل الدرس…</p></div><div class="acts"><a class="btn alt" href="${l.pdf}" target="_blank" rel="noopener">فتح الملف في صفحة مستقلة</a></div>`:'<p class="hint">سيُضاف نص هذا الدرس قريبًا.</p>'}`;
+  ${l.pdf?`<div id="pdf" class="pdf"><p class="hint">جارٍ تحميل الدرس…</p></div>`:'<p class="hint">سيُضاف نص هذا الدرس قريبًا.</p>'}`;
   if(l.qs.length)$('#go').onclick=()=>go(()=>quiz(s,l),l.title,s.color);
   if($('#rc'))$('#rc').onclick=()=>go(()=>recite(s,l),l.title,s.color);
   if(l.pdf)l.pg?renderImgs(l,$('#pdf')):renderPdf(l.pdf,$('#pdf'));
@@ -141,7 +142,50 @@ function quiz(s,l){
 /* حفظ النتيجة على هاتف الطفل فقط (آخر نتيجة + أفضل نتيجة) */
 function save(l,pct){const p=prog(),o=p[l.id]||{};p[l.id]={pct:Math.max(pct,o.pct||0),last:pct,at:Date.now()};store.set('prog',p)}
 
+/* مغادرة الصفحة أثناء اختبار أو جولة تسميع: تُلغى الإجابات وتبدأ من الصفر، وتظهر عند العودة شاشة تنبيه */
+function leftTest(){
+  const T=testActive;if(!T||!kid)return false;
+  if(T.type==='recite'&&!T.live)return false;   /* قائمة العناوين ليست جولة جارية */
+  testActive=null;try{rstopMic()}catch(e){}
+  if(T.type==='recite')rcancelRound(T.l);   /* تعود نتائج الدرس إلى ما قبل الجولة */
+  store.set('leftTest',{type:T.type,sid:T.s.id,lid:T.l.id,at:Date.now()});
+  return true;
+}
+function showLeft(){
+  if(!kid)return;
+  const L=store.get('leftTest',null);if(!L)return;
+  localStorage.removeItem(kkey('leftTest'));
+  const s=SUBJECTS.find(x=>x.id===L.sid),l=s&&s.sections.flatMap(x=>x.lessons).find(x=>x.id===L.lid),q=L.type==='quiz',w=q?'الاختبار':'التسميع';
+  app.innerHTML=`<div class="res"><div class="big">⚠️</div><h2 style="font-size:34px">غادرتَ الصفحة أثناء ${w}</h2><p>أُلغيت جميع إجاباتك${q?'':' في هذه الجولة'} وسيبدأ ${w} من الصفر.</p><div class="acts"><div class="btn" id="rs0">ابدأ من جديد 🔄</div></div><div class="acts"><div class="btn alt" id="hm">الدروس</div></div></div>`;
+  $('#hm').onclick=()=>{hist=[];go(home,'مساعد إياد')};
+  $('#rs0').onclick=()=>{
+    if(!s||!l){hist=[];go(home,'مساعد إياد');return}
+    hist=[[home,'مساعد إياد'],[()=>subject(s),s.name,s.color],[()=>lesson(s,l),l.title,s.color]];
+    go(()=>q?quiz(s,l):recite(s,l),l.title,s.color)};
+}
+document.addEventListener('visibilitychange',()=>{document.hidden?leftTest():showLeft()});
+addEventListener('pagehide',leftTest);
+/* فقدان التركيز: التطبيق ظاهر لكن التلميذ انتقل إلى نافذة أخرى (تيليغرام بجانبه، تقسيم الشاشة، Alt+Tab…).
+   مهلة ثانية واحدة لتجنّب الإنذارات الكاذبة، ويُستثنى ما يفتحه التطبيق نفسه (نوافذ التأكيد وإذن الميكروفون) */
+let blurT=null,dlg=0;
+const grace=ms=>{dlg=Math.max(dlg,Date.now()+ms)};
+['alert','confirm'].forEach(n=>{const o=window[n].bind(window);window[n]=(...a)=>{grace(1500);const r=o(...a);grace(1500);return r}});
+const watching=()=>{const T=testActive;return !!T&&(T.type==='quiz'||(T.type==='recite'&&T.live))};
+function chkBlur(){
+  blurT=null;if(!watching())return;
+  const w=dlg-Date.now();if(w>0){blurT=setTimeout(chkBlur,w+300);return}
+  if(!document.hasFocus()&&leftTest())showLeft();   /* يُخفى محتوى الجولة فورًا فلا يبقى مقروءًا بجانب النافذة الأخرى */
+}
+addEventListener('blur',()=>{if(!watching())return;clearTimeout(blurT);blurT=setTimeout(chkBlur,1000)});
+addEventListener('focus',()=>{clearTimeout(blurT);blurT=null;noFocus=0;showLeft()});
+/* احتياط: بعض المتصفحات/النوافذ لا تُطلق blur دائمًا، فنفحص التركيز كل نصف ثانية أثناء الجولة */
+let noFocus=0;
+setInterval(()=>{
+  if(!watching()||Date.now()<dlg||document.hasFocus()){noFocus=0;return}
+  if(++noFocus>=3){noFocus=0;if(leftTest())showLeft()}
+},500);
+
 (function boot(){
   let id=null;try{id=JSON.parse(localStorage.getItem('kid'))}catch(e){}
-  id&&KIDS.some(k=>k.id===id)?enter(id):pickKid();
+  if(id&&KIDS.some(k=>k.id===id)){enter(id);showLeft()}else pickKid();
 })();

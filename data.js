@@ -4,7 +4,7 @@
    تسميع اختياري: {rec:[['العنوان','الإجابة النموذجية'],…]}. */
 const L=(id,title,qs,x)=>({id,title,pdf:`pdf/${id}.pdf`,qs:qs||[],...(x||{})});
 
-window.SUBJECT_LIST=[['hist','التاريخ'],['geo','الجغرافيا'],['civ','التربية المدنية'],['isl','التربية الإسلامية']];
+window.SUBJECT_LIST=[['hist','التاريخ'],['geo','الجغرافيا'],['civ','التربية المدنية'],['isl','التربية الإسلامية'],['sci','العلوم الطبيعية']];   /* كل طفل يرى فقط المواد المعرَّفة في subjects الخاصة به */
 
 window.KIDS=[
  {id:'ayad',name:'إياد',emoji:'🦁',color:'#FF9F1C',subjects:{
@@ -77,5 +77,8 @@ window.KIDS=[
     L('ay-h33','3-3 وضعية إدماج',[],{pdf:null})]}],
   geo:[],civ:[],isl:[]}},
  {id:'milina',name:'ميلينا',emoji:'🦋',color:'#FF4D8D',subjects:{hist:[],geo:[],civ:[],isl:[]}},
- {id:'wassim',name:'وسيم',emoji:'🚀',color:'#0EA5E9',subjects:{hist:[],geo:[],civ:[],isl:[]}}
+ {id:'wassim',name:'وسيم',emoji:'🚀',color:'#0EA5E9',subjects:{hist:[],geo:[],civ:[],isl:[],
+   sci:[
+    {name:'الدروس',lessons:[
+     L('wa-s01','تحولات الأغذية عند الهضم',[],{pdf:null})]}]}}
 ];

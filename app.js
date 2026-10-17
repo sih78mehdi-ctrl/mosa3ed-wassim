@@ -16,7 +16,7 @@ back.onclick=()=>{
   if(testActive){testActive=null;rstopMic()}   /* التسميع محفوظ تلقائيًا فلا يحتاج تأكيدًا */
   hist.pop();show()};
 who.onclick=()=>{if(testActive&&testActive.type==='quiz'&&!confirm('ستُلغى كل إجاباتك. هل تريد تبديل الطفل؟'))return;testActive=null;try{rstopMic()}catch(e){}pickKid()};
-const PAL={hist:'#FF9F1C',geo:'#0FB5A6',civ:'#6C4DF6',isl:'#22B35E'},ICON={hist:'📜',geo:'🌍',civ:'🏛️',isl:'🕌'};
+const PAL={hist:'#FF9F1C',geo:'#0FB5A6',civ:'#6C4DF6',isl:'#22B35E',sci:'#F43F5E'},ICON={hist:'📜',geo:'🌍',civ:'🏛️',isl:'🕌',sci:'🔬'};
 const PRAISE=['أحسنت!','ممتاز!','رائع!','يا بطل!','مذهل!'],OOPS=['لا بأس، تعلّم منها!','قريبًا تصيبها!','حاول في الجولة القادمة!'];
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const st=()=>store.get('st',{xp:0,day:'',streak:0}),lvl=x=>Math.floor(x/100)+1;
@@ -47,7 +47,7 @@ function pickKid(){
 function enter(id){
   kid=KIDS.find(k=>k.id===id);if(!kid)return pickKid();
   localStorage.setItem('kid',JSON.stringify(id));
-  window.SUBJECTS=SUBJECT_LIST.map(([sid,name])=>({id:sid,name,color:PAL[sid],sections:kid.subjects[sid]||[]}));
+  window.SUBJECTS=SUBJECT_LIST.filter(([sid])=>kid.subjects[sid]).map(([sid,name])=>({id:sid,name,color:PAL[sid],sections:kid.subjects[sid]||[]}));
   who.textContent=kid.emoji;hist=[];go(home,'مساعد إياد');
 }
 function home(){

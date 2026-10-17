@@ -55,10 +55,24 @@ function getRec(l){
   }).filter(Boolean);
 }
 const rfmt=ms=>{ms=Math.max(0,ms);const s=Math.ceil(ms/1000);return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')};
+/* نسبة التسميع الحالية (متوسط أفضل نتيجة لكل عنوان) وأعلى نسبة وصل إليها التلميذ — محفوظتان في الجهاز (localStorage) */
+function rpctNow(l,items){const P=store.get('recpt',{})[l.id]||{};return items.length?Math.round(items.reduce((a,it)=>a+(P[it[0]]||0),0)/items.length):0}
+function rbest(l){const o=store.get('recp',{})[l.id];return o?o.pct||0:0}
+/* إن تغيّرت عناوين الدرس (درس جديد) تُصفَّر نتائجه القديمة حتى لا تختلط بنتائج عناوين لم تعد موجودة */
+function rmigrate(l,items){
+  const sig=items.map(it=>it[0]).join('|'),v=store.get('recv',{});
+  if(v[l.id]===sig)return;
+  if(v[l.id]!==undefined||store.get('recpt',{})[l.id]){
+    const a=store.get('recpt',{});delete a[l.id];store.set('recpt',a);
+    const p=store.get('recp',{});delete p[l.id];store.set('recp',p);
+  }
+  v[l.id]=sig;store.set('recv',v);
+}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}   /* يطلب من المتصفح ألا يمسح بيانات التطبيق */
 function recBtn(l){
   if(!getRec(l).length)return '';
-  const o=store.get('recp',{})[l.id];
-  return `<div class="acts"><div class="btn rec" id="rc">🎙️ اختبار التسميع</div></div>${o?`<p class="hint">تقدّم التسميع: ${o.last}% · أفضل نتيجة: ${o.pct}%</p>`:''}`;
+  rmigrate(l,getRec(l));const o=store.get('recp',{})[l.id];
+  return `<div class="acts"><div class="btn rec" id="rc">🎙️ اختبار التسميع</div></div>${o?`<p class="hint">نسبة التسميع الحالية: ${rpctNow(l,getRec(l))}% · 🏆 أعلى نسبة: ${o.pct}%</p>`:''}`;
 }
 let rTimer=null,rMic=null;
 function rstopMic(){if(rMic){rMic._stop=true;if(rMic._flush)rMic._flush()}try{rMic&&rMic.stop()}catch(e){}rMic=null}
@@ -77,22 +91,23 @@ function rsave(s,l,items,title,score){
 function recite(s,l){
   const items=getRec(l),n=items.length,lv=l.rlv||[];
   const FD=s.id==='fr'?' dir="ltr" lang="fr"':'';
-  testActive=null;rstopMic();
+  testActive=null;rstopMic();rmigrate(l,items);
   const list=()=>{
     testActive=null;
     const P=store.get('recpt',{})[l.id]||{},done=items.filter(it=>P[it[0]]>0).length;
-    app.innerHTML=`<div class="rtop"><span>🎙️ التسميع</span><span>${done} / ${n}</span></div><div class="bar"><i style="width:${done/n*100}%"></i></div>
+    const pc=rpctNow(l,items),bs=Math.max(rbest(l),pc);
+    app.innerHTML=`<div class="rpct"><b>${pc}%</b><span>نسبة التسميع</span><small>🏆 أعلى نسبة وصلتَ إليها: ${bs}%</small></div><div class="rtop"><span>🎙️ التسميع</span><span>${done} / ${n}</span></div><div class="bar"><i style="width:${pc}%"></i></div>
     <p class="hint">${done===n?'🏆 أحسنت! سمّعت كل العناوين — يمكنك إعادة أي عنوان':'اضغط على أي عنوان وابدأ التسميع من حفظك'}</p>
     <div class="rlist2"${FD}>${items.map((it,k)=>{const v=P[it[0]];return `<div class="rt lv${Math.min(3,lv[k]||0)}" data-k="${k}"><span>${v>=100?'✅':v>0?'🟡':v===0?'❌':'⚪'}</span><b>${esc(it[0])}</b></div>`}).join('')}</div>
     <div class="acts"><div class="btn alt rst" id="rst">🔄 ابدأ من الأول</div></div>`;
     app.querySelectorAll('.rt').forEach(e=>e.onclick=()=>one(+e.dataset.k));
-    $('#rst').onclick=()=>{if(confirm('سيُمسح تقدّمك في هذا التسميع لتبدأ من العنوان الأول. هل تريد ذلك؟')){const a=store.get('recpt',{});delete a[l.id];store.set('recpt',a);list()}};
+    $('#rst').onclick=()=>{if(confirm('ستبدأ نسبة التسميع الحالية من الصفر، وتبقى أعلى نسبة وصلتَ إليها محفوظة. هل تريد ذلك؟')){const a=store.get('recpt',{});delete a[l.id];store.set('recpt',a);const p=store.get('recp',{});if(p[l.id]){p[l.id].last=0;store.set('recp',p)}list()}};
   };
   const one=k=>{
     const it=items[k];let att=0;
     testActive={type:'recite',s,l};
     const dots=()=>[0,1,2].map(j=>j<att?'🔴':j===att?'🟡':'⚪').join(' ')+` &nbsp; المحاولة ${Math.min(att+1,RMAX)} من ${RMAX}`;
-    app.innerHTML=`<div class="rtop"><span>🎙️ التسميع</span><span>${k+1} / ${n}</span></div>
+    app.innerHTML=`<div class="rpct s"><b id="rpv">${rpctNow(l,items)}%</b><span>نسبة التسميع</span><small>🏆 الأعلى: <i id="rpb">${Math.max(rbest(l),rpctNow(l,items))}</i>%</small></div><div class="rtop"><span>🎙️ التسميع</span><span>${k+1} / ${n}</span></div>
     <div class="qbox"${FD}>${it[3]?'':(FD?'Récite : ':'سمّع: ')}${esc(it[0])}</div>
     <p class="dots">${dots()}</p>
     <textarea id="ans" rows="5"${FD} placeholder="سمّع من حفظك… أو اكتب إجابتك بنفسك" autocomplete="off" autocapitalize="off" spellcheck="false"></textarea>
@@ -103,7 +118,7 @@ function recite(s,l){
     ['paste','drop','cut','copy','contextmenu'].forEach(ev=>ta.addEventListener(ev,e=>e.preventDefault()));
     initMic($('#mic'),ta,s.id==='fr'?'fr-FR':'ar-DZ');
     const end=pass=>{
-      testActive=null;ta.disabled=true;$('#chk').hidden=true;$('#mic').hidden=true;const ms=document.querySelector('.mst');if(ms)ms.hidden=true;
+      testActive=null;$('#rpv').textContent=rpctNow(l,items)+'%';$('#rpb').textContent=rbest(l);ta.disabled=true;$('#chk').hidden=true;$('#mic').hidden=true;const ms=document.querySelector('.mst');if(ms)ms.hidden=true;
       $('#fb').innerHTML=`<div class="fb ${pass?'g':'b'}">${pass?pick(PRAISE)+' ⭐ — أصبت المعنى':'انتهت المحاولات'}</div><p class="hint">الإجابة النموذجية:</p><div class="mdl"${FD}>${esc(it[1])}</div>
       <div class="acts"><div class="btn alt" id="rt">🔁 أعد هذا العنوان</div>${k+1<n?'<div class="btn" id="nx2">العنوان التالي ◀</div>':''}</div>`;
       $('#rt').onclick=()=>one(k);
